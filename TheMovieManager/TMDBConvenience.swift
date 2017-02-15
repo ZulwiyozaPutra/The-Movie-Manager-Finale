@@ -111,7 +111,7 @@ extension TMDBClient {
         }
     }
     
-    private func getSessionID(_ requestToken: String?, completionHandlerForSession: @escaping (_ success: Bool, _ sessionID: String?, _ errorString: String?) -> Void) {
+    private func getSessionID(_ requestToken: String?, completionHandlerForSession: @escaping (_ success: Bool,_ sessionID: String?,_ errorString: String?) -> Void) {
         
         /* 1. Specify parameters, method (if has {key}), and HTTP body (if POST) */
         let parameters = [TMDBClient.ParameterKeys.RequestToken: requestToken!]
@@ -140,7 +140,7 @@ extension TMDBClient {
         let parameters = [TMDBClient.ParameterKeys.SessionID: TMDBClient.sharedInstance().sessionID!]
         
         /* 2. Make the request */
-        let _ = taskForGETMethod(Methods.Account, parameters: parameters as [String:AnyObject]) { (results, error) in
+        taskForGETMethod(Methods.Account, parameters: parameters as [String:AnyObject]) { (results, error) in
             
             /* 3. Send the desired value(s) to completion handler */
             if let error = error {
@@ -188,18 +188,24 @@ extension TMDBClient {
     func getWatchlistMovies(_ completionHandlerForWatchlist: @escaping (_ result: [TMDBMovie]?, _ error: NSError?) -> Void) {
         
         /* 1. Specify parameters, the API method, and the HTTP body (if POST) */
+        let parameters: [String: AnyObject] = [TMDBClient.ParameterKeys.SessionID: TMDBClient.sharedInstance().sessionID! as AnyObject]
+        var mutableMethod: String = Methods.AccountIDWatchlistMovies
+        mutableMethod = substituteKeyInMethod(mutableMethod, key: TMDBClient.URLKeys.UserID, value: String(TMDBClient.sharedInstance().userID!))!
         
-        
-        /* 2. Make the request */
-        /* 3. Send the desired value(s) to completion handler */
-        
-        /*
-        
-        taskForGETMethod(method, parameters: parameters) { (results, error) in
-        
+        taskForGETMethod(mutableMethod, parameters: parameters) { (result, error) in
+            
+            if let error = error {
+                completionHandlerForWatchlist(nil, error)
+            } else {
+                
+                if let result = result?[TMDBClient.JSONResponseKeys.MovieResults] as? [[String : AnyObject]] {
+                    let movies = TMDBMovie.moviesFromResults(result)
+                    completionHandlerForWatchlist(movies, nil)
+                } else {
+                    completionHandlerForWatchlist(nil, NSError(domain: "getWatchListMovies parsing", code: 0, userInfo: [NSLocalizedDescriptionKey: "Could not parse getWatchListMovies"]))
+                }
+            }
         }
-        
-        */
     }
     
     func getMoviesForSearchString(_ searchString: String, completionHandlerForMovies: @escaping (_ result: [TMDBMovie]?, _ error: NSError?) -> Void) -> URLSessionDataTask? {
@@ -208,16 +214,17 @@ extension TMDBClient {
         let parameters = [TMDBClient.ParameterKeys.Query: searchString]
         
         /* 2. Make the request */
-        let task = taskForGETMethod(Methods.SearchMovie, parameters: parameters as [String:AnyObject]) { (results, error) in
+        let task = taskForGETMethod(Methods.SearchMovie, parameters: parameters as [String:AnyObject]) { (result
+            , error) in
             
             /* 3. Send the desired value(s) to completion handler */
             if let error = error {
                 completionHandlerForMovies(nil, error)
             } else {
                 
-                if let results = results?[TMDBClient.JSONResponseKeys.MovieResults] as? [[String:AnyObject]] {
+                if let result = result?[TMDBClient.JSONResponseKeys.MovieResults] as? [[String:AnyObject]] {
                     
-                    let movies = TMDBMovie.moviesFromResults(results)
+                    let movies = TMDBMovie.moviesFromResults(result)
                     completionHandlerForMovies(movies, nil)
                 } else {
                     completionHandlerForMovies(nil, NSError(domain: "getMoviesForSearchString parsing", code: 0, userInfo: [NSLocalizedDescriptionKey: "Could not parse getMoviesForSearchString"]))
