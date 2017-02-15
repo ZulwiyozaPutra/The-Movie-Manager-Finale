@@ -20,6 +20,7 @@ class MovieDetailViewController: UIViewController {
     
     // MARK: Outlets
     
+    @IBOutlet weak var ratingLabel: UILabel!
     @IBOutlet weak var posterImageView: UIImageView!
     @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
     @IBOutlet weak var toggleFavoriteButton: UIBarButtonItem!
@@ -46,6 +47,10 @@ class MovieDetailViewController: UIViewController {
                 navigationItem.title = "\(movie.title) (\(releaseYear))"
             } else {
                 navigationItem.title = "\(movie.title)"
+            }
+            
+            if let rating = movie.rating {
+                ratingLabel.text = String(rating)
             }
             
             // setting some default UI ...
