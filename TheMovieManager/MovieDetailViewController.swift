@@ -120,7 +120,6 @@ class MovieDetailViewController: UIViewController {
     }
     
     // MARK: Actions
-    
     @IBAction func toggleFavorite(_ sender: AnyObject) {
         
         let shouldFavorite = !isFavorite
