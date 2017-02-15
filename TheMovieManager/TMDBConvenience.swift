@@ -284,15 +284,24 @@ extension TMDBClient {
     func postToWatchlist(_ movie: TMDBMovie, watchlist: Bool, completionHandlerForWatchlist: @escaping (_ result: Int?, _ error: NSError?) -> Void) {
         
         /* 1. Specify parameters, the API method, and the HTTP body (if POST) */
-        /* 2. Make the request */
-        /* 3. Send the desired value(s) to completion handler */
+        let parameters: [String: AnyObject] = [TMDBClient.ParameterKeys.SessionID: TMDBClient.sharedInstance().sessionID! as AnyObject]
+        var mutableMethod: String = Methods.AccountIDWatchlist
+        mutableMethod = substituteKeyInMethod(mutableMethod, key: TMDBClient.URLKeys.UserID, value: String(TMDBClient.sharedInstance().userID!))!
+        let jsonBody = "{\"\(TMDBClient.JSONBodyKeys.MediaType)\": \"movie\",\"\(TMDBClient.JSONBodyKeys.MediaID)\": \"\(movie.id)\",\"\(TMDBClient.JSONBodyKeys.Watchlist)\": \(watchlist)}"
         
-        /*
-        
-        taskForPOSTMethod(method, parameters: parameters, jsonBody: jsonBody) { (result, error) in
-        
+        taskForPOSTMethod(mutableMethod, parameters: parameters, jsonBody: jsonBody) { (result, error) in
+            
+            if let error = error {
+                completionHandlerForWatchlist(nil, error)
+            } else {
+                if let result = result?[TMDBClient.JSONResponseKeys.StatusCode] as? Int {
+                    completionHandlerForWatchlist(result, nil)
+                } else {
+                    completionHandlerForWatchlist(nil, NSError(domain: "postToWatchList parsing", code: 0, userInfo: [NSLocalizedDescriptionKey: "Could not parse postToWatchList"]))
+                }
+            }
+            
         }
         
-        */
     }
 }
